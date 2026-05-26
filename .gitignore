@@ -1,0 +1,25 @@
+# Node modules
+**/node_modules
+
+# Build outputs
+frontend/dist
+
+# SQLite database
+backend/database.sqlite
+
+# Uploads
+backend/uploads
+
+# Logs
+*.log
+
+# Vite cache
+node_modules/.vite
+
+# Editor files
+.vscode/
+*.code-workspace
+
+# System files
+.DS_Store
+Thumbs.db

@@ -170,6 +170,36 @@ function Dashboard() {
     }
   };
 
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir este usuário?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+        headers: authHeader()
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+      if (!response.ok) {
+        setMessage(result.error || 'Erro ao excluir usuário.');
+        return;
+      }
+
+      setMessage('Usuário excluído com sucesso.');
+      loadUsers();
+    } catch (error) {
+      console.error('Erro ao excluir usuário', error);
+      setMessage('Erro ao excluir usuário. Veja o console.');
+    }
+  };
+
   const loadCities = async () => {
     try {
       const response = await fetch('/api/cities', { headers: authHeader() });
@@ -613,6 +643,7 @@ function Dashboard() {
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>Perfil</th>
+                        {isAdmin && <th>Ações</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -621,6 +652,17 @@ function Dashboard() {
                           <td>{item.nome}</td>
                           <td>{item.email}</td>
                           <td>{item.perfil === 'admin' ? 'Administrador' : 'Visualizador'}</td>
+                          {isAdmin && (
+                            <td>
+                              <button
+                                className="small-button danger"
+                                onClick={() => handleDeleteUser(item.id)}
+                                disabled={item.id === user?.id}
+                              >
+                                Excluir
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>

@@ -39,4 +39,18 @@ router.post('/', requireAdmin, (req, res) => {
   });
 });
 
+router.delete('/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.get('SELECT id FROM usuarios WHERE id = ?', [id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+    db.run('DELETE FROM usuarios WHERE id = ?', [id], function (deleteErr) {
+      if (deleteErr) return res.status(500).json({ error: deleteErr.message });
+      res.json({ deleted: this.changes });
+    });
+  });
+});
+
 module.exports = router;

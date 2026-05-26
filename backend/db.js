@@ -12,12 +12,26 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 const defaultOperators = ['Operador A', 'Operador B', 'Operador C'];
 const defaultCities = [
-  'Açailândia', 'Amarante do Maranhão', 'Campestre do Maranhão', 'Cidelândia',
-  'Davinópolis', 'Estreito', 'Governador Edison Lobão', 'Grajaú', 'Imperatriz',
-  'João Lisboa', 'Marabá', 'Parauapebas', 'Porto Franco', 'Ribamar Fiquene',
-  'São Francisco do Brejão', 'São Pedro da Água Branca', 'Senador La Rocque',
-  'Sítio Novo', 'Vila Nova dos Martírios'
-].map((nome) => ({ nome, estado: 'Maranhão' }));
+  { nome: 'Açailândia', estado: 'Maranhão' },
+  { nome: 'Amarante do Maranhão', estado: 'Maranhão' },
+  { nome: 'Campestre do Maranhão', estado: 'Maranhão' },
+  { nome: 'Cidelândia', estado: 'Maranhão' },
+  { nome: 'Davinópolis', estado: 'Maranhão' },
+  { nome: 'Estreito', estado: 'Maranhão' },
+  { nome: 'Governador Edison Lobão', estado: 'Maranhão' },
+  { nome: 'Grajaú', estado: 'Maranhão' },
+  { nome: 'Imperatriz', estado: 'Maranhão' },
+  { nome: 'João Lisboa', estado: 'Maranhão' },
+  { nome: 'Marabá', estado: 'Pará' },
+  { nome: 'Parauapebas', estado: 'Pará' },
+  { nome: 'Porto Franco', estado: 'Maranhão' },
+  { nome: 'Ribamar Fiquene', estado: 'Maranhão' },
+  { nome: 'São Francisco do Brejão', estado: 'Maranhão' },
+  { nome: 'São Pedro da Água Branca', estado: 'Maranhão' },
+  { nome: 'Senador La Rocque', estado: 'Maranhão' },
+  { nome: 'Sítio Novo', estado: 'Maranhão' },
+  { nome: 'Vila Nova dos Martírios', estado: 'Maranhão' }
+];
 
 const init = () => {
   db.serialize(() => {
@@ -84,6 +98,7 @@ const init = () => {
       if (!err && row.count === 0) {
         const stmt = db.prepare('INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)');
         stmt.run('Admin DDS', 'admin@dds.com', 'admin123', 'admin');
+        stmt.run('Visualizador DDS', 'viewer@dds.com', 'viewer123', 'visualizador');
         stmt.finalize();
       }
     });

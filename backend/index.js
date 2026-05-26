@@ -6,6 +6,7 @@ const db = require('./db');
 const ddsRoutes = require('./routes/dds');
 const operatorsRoutes = require('./routes/operators');
 const citiesRoutes = require('./routes/cities');
+const usersRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const authMiddleware = require('./middleware/auth');
 
@@ -24,6 +25,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 app.use('/api', authMiddleware);
+app.use('/api/users', usersRoutes);
 app.use('/api/dds', ddsRoutes);
 app.use('/api/operators', operatorsRoutes);
 app.use('/api/cities', citiesRoutes);

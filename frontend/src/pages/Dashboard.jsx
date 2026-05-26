@@ -5,11 +5,25 @@ import DdsList from '../components/DdsList.jsx';
 import SidebarAttachments from '../components/SidebarAttachments.jsx';
 
 const cidadesPadrao = [
-  'Açailândia', 'Amarante do Maranhão', 'Campestre do Maranhão', 'Cidelândia',
-  'Davinópolis', 'Estreito', 'Governador Edison Lobão', 'Grajaú', 'Imperatriz',
-  'João Lisboa', 'Marabá', 'Parauapebas', 'Porto Franco', 'Ribamar Fiquene',
-  'São Francisco do Brejão', 'São Pedro da Água Branca', 'Senador La Rocque',
-  'Sítio Novo', 'Vila Nova dos Martírios'
+  { nome: 'Açailândia', estado: 'Maranhão' },
+  { nome: 'Amarante do Maranhão', estado: 'Maranhão' },
+  { nome: 'Campestre do Maranhão', estado: 'Maranhão' },
+  { nome: 'Cidelândia', estado: 'Maranhão' },
+  { nome: 'Davinópolis', estado: 'Maranhão' },
+  { nome: 'Estreito', estado: 'Maranhão' },
+  { nome: 'Governador Edison Lobão', estado: 'Maranhão' },
+  { nome: 'Grajaú', estado: 'Maranhão' },
+  { nome: 'Imperatriz', estado: 'Maranhão' },
+  { nome: 'João Lisboa', estado: 'Maranhão' },
+  { nome: 'Marabá', estado: 'Pará' },
+  { nome: 'Parauapebas', estado: 'Pará' },
+  { nome: 'Porto Franco', estado: 'Maranhão' },
+  { nome: 'Ribamar Fiquene', estado: 'Maranhão' },
+  { nome: 'São Francisco do Brejão', estado: 'Maranhão' },
+  { nome: 'São Pedro da Água Branca', estado: 'Maranhão' },
+  { nome: 'Senador La Rocque', estado: 'Maranhão' },
+  { nome: 'Sítio Novo', estado: 'Maranhão' },
+  { nome: 'Vila Nova dos Martírios', estado: 'Maranhão' }
 ];
 
 function Dashboard() {
@@ -43,6 +57,12 @@ function Dashboard() {
   });
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('cadastro');
+  const [users, setUsers] = useState([]);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserPerfil, setNewUserPerfil] = useState('visualizador');
 
   const authHeader = () => {
     const token = localStorage.getItem('dds_token');
@@ -54,6 +74,9 @@ function Dashboard() {
     localStorage.removeItem('dds_token');
     navigate('/login');
   };
+
+  const isAdmin = user?.perfil === 'admin';
+  const perfilDescricao = user?.perfil === 'admin' ? 'Administrador' : 'Visualizador';
 
   useEffect(() => {
     const storedUser = localStorage.getItem('dds_user');
@@ -85,8 +108,66 @@ function Dashboard() {
   }, [selectedDds]);
 
   const loadInitialData = async () => {
-    await Promise.all([loadCities(), loadOperators()]);
+    await Promise.all([loadCities(), loadOperators(), loadUsers()]);
     loadDds();
+  };
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetch('/api/users', { headers: authHeader() });
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Falha ao carregar usuários', error);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserName.trim() || !newUserEmail.trim() || !newUserPassword.trim()) {
+      setMessage('Preencha nome, e-mail e senha do usuário.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeader()
+        },
+        body: JSON.stringify({
+          nome: newUserName,
+          email: newUserEmail,
+          senha: newUserPassword,
+          perfil: newUserPerfil
+        })
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+      if (!response.ok) {
+        setMessage(result.error || 'Erro ao cadastrar usuário.');
+        return;
+      }
+
+      setMessage(`Usuário ${result.nome} cadastrado com sucesso.`);
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserPerfil('visualizador');
+      loadUsers();
+    } catch (error) {
+      console.error('Erro ao cadastrar usuário', error);
+      setMessage('Erro ao cadastrar usuário. Veja o console.');
+    }
   };
 
   const loadCities = async () => {
@@ -306,161 +387,260 @@ function Dashboard() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div>CADASTRO</div>
-        <div>LANÇAR DDS</div>
-        <div>CONSULTAR DDS</div>
-        <div>RELATÓRIOS</div>
+        <div className="brand">Júpiter DDS</div>
+        <div className="topbar-nav">
+          <button
+            className={`nav-button ${selectedSection === 'cadastro' ? 'active' : ''}`}
+            onClick={() => setSelectedSection('cadastro')}
+          >
+            Cadastro
+          </button>
+          <button
+            className={`nav-button ${selectedSection === 'usuarios' ? 'active' : ''}`}
+            onClick={() => setSelectedSection('usuarios')}
+          >
+            Usuários
+          </button>
+        </div>
         <div className="topbar-user">
-          {user?.nome}
+          <span>{user?.nome} ({perfilDescricao})</span>
           <button className="small-button" onClick={handleLogout}>Sair</button>
         </div>
       </header>
 
-      <main className="main-layout">
-        <section className="form-panel">
-          <h1>Cadastro de DDS</h1>
-          {message && <div className="message-box">{message}</div>}
+      <section className="page-header">
+        <div>
+          <h1>Controle de DDS</h1>
+          <p>Use os filtros abaixo e selecione a cidade para ver ou registrar novos relatórios.</p>
+        </div>
+      </section>
 
+      <section className="filter-panel">
+        <div className="filter-grid filter-grid-top">
           <label>
-            Título do DDS
-            <input value={ddsTitle} onChange={(e) => setDdsTitle(e.target.value)} />
-          </label>
-
-          <label>
-            Descrição do tema
-            <textarea value={ddsDescription} onChange={(e) => setDdsDescription(e.target.value)} />
-          </label>
-
-          <label>
-            Operador responsável
-            <select value={operatorId} onChange={(e) => setOperatorId(e.target.value)}>
+            Operador
+            <select value={filter.operador} onChange={(e) => setFilter({ ...filter, operador: e.target.value })}>
+              <option value="">Todos</option>
               {operators.map((operator) => (
-                <option key={operator.id} value={operator.id}>{operator.nome}</option>
+                <option key={operator.id} value={operator.nome}>{operator.nome}</option>
               ))}
             </select>
           </label>
-
           <label>
-            Data do DDS
-            <input type="date" value={dataDds} onChange={(e) => setDataDds(e.target.value)} />
+            Mês
+            <input
+              type="number"
+              min="1"
+              max="12"
+              value={filter.mes}
+              onChange={(e) => setFilter({ ...filter, mes: e.target.value })}
+              placeholder="Mês"
+            />
           </label>
-
           <label>
-            Cidade / escritório selecionada
-            <input value={selectedCity} disabled />
+            Ano
+            <input
+              type="number"
+              min="2020"
+              value={filter.ano}
+              onChange={(e) => setFilter({ ...filter, ano: e.target.value })}
+              placeholder="Ano"
+            />
           </label>
-
           <label>
-            Status
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="ativo">Ativo</option>
-              <option value="desabilitado">Desabilitado</option>
-            </select>
+            Estado
+            <input
+              value={filter.estado}
+              onChange={(e) => setFilter({ ...filter, estado: e.target.value })}
+              placeholder="Estado"
+            />
           </label>
-
-          <label className="checkbox-label">
-            <input type="checkbox" checked={conferido} onChange={(e) => setConferido(e.target.checked)} />
-            DDS conferido
+          <label>
+            Cidade
+            <input
+              value={filter.cidade}
+              onChange={(e) => setFilter({ ...filter, cidade: e.target.value })}
+              placeholder="Cidade"
+            />
           </label>
-
-          <div className="attachments-inputs">
-            <label>
-              Anexo PDF
-              <input type="file" accept="application/pdf" onChange={(e) => setAnexoPdf(e.target.files[0])} />
+          <div className="checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={filter.conferido === 'sim'}
+                onChange={(e) => setFilter({ ...filter, conferido: e.target.checked ? 'sim' : '' })}
+              />
+              Relatórios conferidos
             </label>
-            <label>
-              Anexo de vídeo
-              <input type="file" accept="video/*" onChange={(e) => setAnexoVideo(e.target.files[0])} />
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={filter.incluirDesabilitados}
+                onChange={(e) => setFilter({ ...filter, incluirDesabilitados: e.target.checked })}
+              />
+              Incluir desabilitadas
             </label>
           </div>
+          <button className="secondary-button filter-apply" onClick={handleApplyFilters}>Filtrar</button>
+        </div>
+      </section>
 
-          <button className="primary-button" onClick={handleSaveDds}>Salvar DDS</button>
+      <CityButtons cidades={currentCityNames} selectedCity={selectedCity} onSelect={setSelectedCity} />
 
-          <div className="filters-panel">
-            <h2>Filtros</h2>
-            <div className="filter-grid">
-              <label>
-                Operador
-                <input
-                  value={filter.operador}
-                  onChange={(e) => setFilter({ ...filter, operador: e.target.value })}
-                  placeholder="Operador"
-                />
-              </label>
-              <label>
-                Dia
-                <input
-                  value={filter.dia}
-                  onChange={(e) => setFilter({ ...filter, dia: e.target.value })}
-                  placeholder="Dia"
-                />
-              </label>
-              <label>
-                Mês
-                <input
-                  value={filter.mes}
-                  onChange={(e) => setFilter({ ...filter, mes: e.target.value })}
-                  placeholder="Mês"
-                />
-              </label>
-              <label>
-                Ano
-                <input
-                  value={filter.ano}
-                  onChange={(e) => setFilter({ ...filter, ano: e.target.value })}
-                  placeholder="Ano"
-                />
-              </label>
-              <label>
-                Estado
-                <input
-                  value={filter.estado}
-                  onChange={(e) => setFilter({ ...filter, estado: e.target.value })}
-                  placeholder="Estado"
-                />
-              </label>
-              <label>
-                Cidade
-                <input
-                  value={filter.cidade}
-                  onChange={(e) => setFilter({ ...filter, cidade: e.target.value })}
-                  placeholder="Cidade"
-                />
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filter.incluirDesabilitados}
-                  onChange={(e) => setFilter({ ...filter, incluirDesabilitados: e.target.checked })}
-                />
-                Incluir desabilitados
-              </label>
-              <label>
-                DDS conferido
-                <select
-                  value={filter.conferido}
-                  onChange={(e) => setFilter({ ...filter, conferido: e.target.value })}
-                >
-                  <option value="">Todos</option>
-                  <option value="sim">Sim</option>
-                  <option value="nao">Não</option>
-                </select>
-              </label>
-              <button className="secondary-button" onClick={handleApplyFilters}>Aplicar filtros</button>
+      <main className="main-layout">
+        <section className="main-content">
+          {selectedSection === 'cadastro' ? (
+            <>              
+              <div className="form-card">
+                <div className="panel-header">
+                  <div>
+                    <h2>Cadastro de DDS</h2>
+                    <p>Registre um novo DDS para a cidade selecionada.</p>
+                  </div>
+                </div>
+
+                {message && <div className="message-box">{message}</div>}
+
+                <label>
+                  Título do DDS
+                  <input value={ddsTitle} onChange={(e) => setDdsTitle(e.target.value)} />
+                </label>
+
+                <label>
+                  Descrição do tema
+                  <textarea value={ddsDescription} onChange={(e) => setDdsDescription(e.target.value)} />
+                </label>
+
+                <div className="form-grid">
+                  <label>
+                    Operador responsável
+                    <select value={operatorId} onChange={(e) => setOperatorId(e.target.value)}>
+                      {operators.map((operator) => (
+                        <option key={operator.id} value={operator.id}>{operator.nome}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Data do DDS
+                    <input type="date" value={dataDds} onChange={(e) => setDataDds(e.target.value)} />
+                  </label>
+                  <label>
+                    Cidade / escritório selecionada
+                    <input value={selectedCity} disabled />
+                  </label>
+                  <label>
+                    Status
+                    <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                      <option value="ativo">Ativo</option>
+                      <option value="desabilitado">Desabilitado</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label className="checkbox-label compact">
+                  <input type="checkbox" checked={conferido} onChange={(e) => setConferido(e.target.checked)} />
+                  DDS conferido
+                </label>
+
+                <div className="attachments-inputs">
+                  <label>
+                    Anexo PDF
+                    <input type="file" accept="application/pdf" onChange={(e) => setAnexoPdf(e.target.files[0])} />
+                  </label>
+                  <label>
+                    Anexo de vídeo
+                    <input type="file" accept="video/*" onChange={(e) => setAnexoVideo(e.target.files[0])} />
+                  </label>
+                </div>
+
+                <button className="primary-button" onClick={handleSaveDds}>Salvar DDS</button>
+              </div>
+
+              <DdsList ddsList={ddsList} selectedDds={selectedDds} onSelect={setSelectedDds} onMarkConferido={handleMarkConferido} />
+            </>
+          ) : (
+            <div className="form-card">
+              <div className="panel-header">
+                <div>
+                  <h2>Área de Usuários</h2>
+                  <p>Cadastre novos acessos e visualize perfis de administrador e visualizador.</p>
+                </div>
+              </div>
+
+              {message && <div className="message-box">{message}</div>}
+
+              {isAdmin ? (
+                <div className="form-grid">
+                  <label>
+                    Nome do usuário
+                    <input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="Nome completo" />
+                  </label>
+                  <label>
+                    E-mail
+                    <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="email@dominio.com" />
+                  </label>
+                  <label>
+                    Senha
+                    <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} placeholder="Senha" />
+                  </label>
+                  <label>
+                    Perfil
+                    <select value={newUserPerfil} onChange={(e) => setNewUserPerfil(e.target.value)}>
+                      <option value="visualizador">Visualizador</option>
+                      <option value="admin">Administrador</option>
+                    </select>
+                  </label>
+                </div>
+              ) : (
+                <div className="message-box">Apenas administradores podem cadastrar novos usuários.</div>
+              )}
+
+              {isAdmin && (
+                <button className="primary-button" onClick={handleCreateUser}>Cadastrar usuário</button>
+              )}
+
+              <div className="dds-list" style={{ marginTop: '24px' }}>
+                <div className="panel-header">
+                  <div>
+                    <h2>Usuários cadastrados</h2>
+                    <p>Veja os perfis de cada usuário do sistema.</p>
+                  </div>
+                </div>
+                <div className="table-wrapper">
+                  <table className="dds-table user-table">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Perfil</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.nome}</td>
+                          <td>{item.email}</td>
+                          <td>{item.perfil === 'admin' ? 'Administrador' : 'Visualizador'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
-        <section className="side-panel">
-          <CityButtons cidades={currentCityNames} selectedCity={selectedCity} onSelect={setSelectedCity} />
-          <DdsList ddsList={ddsList} selectedDds={selectedDds} onSelect={setSelectedDds} onMarkConferido={handleMarkConferido} />
-          <SidebarAttachments
-            dds={selectedDds}
-            attachments={attachments}
-            onUpload={handleUploadAttachments}
-            onDeleteAttachment={handleDeleteAttachment}
-          />
-        </section>
+        {selectedSection === 'cadastro' && (
+          <aside className="side-panel">
+            <SidebarAttachments
+              dds={selectedDds}
+              attachments={attachments}
+              onUpload={handleUploadAttachments}
+              onDeleteAttachment={handleDeleteAttachment}
+            />
+          </aside>
+        )}
       </main>
     </div>
   );

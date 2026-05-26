@@ -182,11 +182,11 @@ function Dashboard() {
         setCities(data);
         setSelectedCity(data[0].nome);
       } else {
-        setCities(cidadesPadrao.map((nome) => ({ id: null, nome, estado: 'Maranhão' })));
+        setCities(cidadesPadrao);
       }
     } catch (error) {
       console.error('Falha ao carregar cidades', error);
-      setCities(cidadesPadrao.map((nome) => ({ id: null, nome, estado: 'Maranhão' })));
+      setCities(cidadesPadrao);
     }
   };
 
@@ -382,7 +382,7 @@ function Dashboard() {
     navigate('/login');
   };
 
-  const currentCityNames = cities.length > 0 ? cities.map((city) => city.nome) : cidadesPadrao;
+  const currentCityNames = cities.length > 0 ? cities : cidadesPadrao;
 
   return (
     <div className="app-shell">
@@ -485,7 +485,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <CityButtons cidades={currentCityNames} selectedCity={selectedCity} onSelect={setSelectedCity} />
+      <CityButtons cidades={cities} selectedCity={selectedCity} onSelect={setSelectedCity} />
 
       <main className="main-layout">
         <section className="main-content">

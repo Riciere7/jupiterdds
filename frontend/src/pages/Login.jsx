@@ -17,10 +17,13 @@ function Login() {
     if (event) event.preventDefault();
     setError('');
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('https://api.jupiter.com.br/action/Usuario/logar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({ usuario: email, senha })
       });
       const result = await response.json();
       if (!response.ok) {
@@ -28,8 +31,12 @@ function Login() {
         return;
       }
 
-      localStorage.setItem('dds_user', JSON.stringify(result.user));
-      localStorage.setItem('dds_token', result.token);
+      const user = {
+        nome: result.usuario || email,
+        perfil: result.perfil || 'visualizador'
+      };
+      localStorage.setItem('dds_user', JSON.stringify(user));
+      localStorage.setItem('dds_token', result.accessToken);
       navigate('/');
     } catch (err) {
       console.error(err);

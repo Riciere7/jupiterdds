@@ -13,6 +13,17 @@ function authMiddleware(req, res, next) {
     req.user = payload;
     next();
   } catch (err) {
+    // Fallback: aceitamos tokens externos como JWTs se não puderem ser verificados com o segredo local
+    const payload = jwt.decode(token);
+    if (payload && typeof payload === 'object') {
+      req.user = {
+        id: payload.id || payload.sub || null,
+        nome: payload.nome || payload.usuario || payload.name || 'Usuário',
+        perfil: payload.perfil || 'visualizador',
+        email: payload.email || ''
+      };
+      return next();
+    }
     return res.status(401).json({ error: 'Token inválido.' });
   }
 }

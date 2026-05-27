@@ -590,7 +590,12 @@ function Dashboard() {
                   </label>
                   <label>
                     Cidade / escritório selecionada
-                    <input value={selectedCity} disabled />
+                    <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}>
+                      {currentCityNames.map((city) => {
+                        const cityName = typeof city === 'string' ? city : city.nome;
+                        return <option key={cityName} value={cityName}>{cityName}</option>;
+                      })}
+                    </select>
                   </label>
                   <label>
                     Status

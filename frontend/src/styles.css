@@ -297,6 +297,20 @@ label {
   color: #334155;
 }
 
+.selected-city-display {
+  width: 100%;
+  min-height: 50px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+}
+
 .form-card label {
   margin-bottom: 20px;
 }

@@ -1,4 +1,4 @@
-function DdsList({ ddsList, selectedDds, onSelect, onMarkConferido }) {
+function DdsList({ ddsList, selectedDds, onSelect, onMarkConferido, onDeleteDds, isAdmin }) {
   return (
     <div className="dds-list">
       <h2>Lista de DDS</h2>
@@ -37,6 +37,18 @@ function DdsList({ ddsList, selectedDds, onSelect, onMarkConferido }) {
                     {!dds.conferido && (
                       <button className="small-button" onClick={(e) => { e.stopPropagation(); onMarkConferido(dds); }}>
                         Marcar
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        className="small-button danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteDds(dds.id);
+                        }}
+                        style={{ marginLeft: '10px' }}
+                      >
+                        Excluir
                       </button>
                     )}
                   </td>

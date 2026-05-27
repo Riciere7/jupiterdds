@@ -1,4 +1,5 @@
 function CityButtons({ cidades, selectedCity, onSelect }) {
+  const selectedCityName = typeof selectedCity === 'string' ? selectedCity : selectedCity?.nome || '';
   const estadoPorCidade = {
     'Açailândia': 'MA',
     'Amarante do Maranhão': 'MA',
@@ -38,7 +39,7 @@ function CityButtons({ cidades, selectedCity, onSelect }) {
           return (
             <button
               key={nomeCidade}
-              className={nomeCidade === selectedCity ? 'city-chip active' : 'city-chip'}
+              className={nomeCidade === selectedCityName ? 'city-chip active' : 'city-chip'}
               onClick={() => onSelect(nomeCidade)}
             >
               <span className="city-chip-badge">{sigla}</span>

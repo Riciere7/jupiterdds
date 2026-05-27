@@ -31,7 +31,7 @@ function Dashboard() {
   const [cities, setCities] = useState([]);
   const [operators, setOperators] = useState([]);
   const [ddsList, setDdsList] = useState([]);
-  const [selectedCity, setSelectedCity] = useState(cidadesPadrao[0]);
+  const [selectedCity, setSelectedCity] = useState(cidadesPadrao[0].nome);
   const [selectedCityId, setSelectedCityId] = useState(null);
   const [selectedDds, setSelectedDds] = useState(null);
   const [attachments, setAttachments] = useState([]);
@@ -197,6 +197,36 @@ function Dashboard() {
     } catch (error) {
       console.error('Erro ao excluir usuário', error);
       setMessage('Erro ao excluir usuário. Veja o console.');
+    }
+  };
+
+  const handleDeleteDds = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir este DDS?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/dds/${id}`, {
+        method: 'DELETE',
+        headers: authHeader()
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+      if (!response.ok) {
+        setMessage(result.error || 'Erro ao excluir DDS.');
+        return;
+      }
+
+      setMessage('DDS excluído com sucesso.');
+      loadDds(filter);
+    } catch (error) {
+      console.error('Erro ao excluir DDS', error);
+      setMessage('Erro ao excluir DDS. Veja o console.');
     }
   };
 
@@ -445,77 +475,81 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="filter-panel">
-        <div className="filter-grid filter-grid-top">
-          <label>
-            Operador
-            <select value={filter.operador} onChange={(e) => setFilter({ ...filter, operador: e.target.value })}>
-              <option value="">Todos</option>
-              {operators.map((operator) => (
-                <option key={operator.id} value={operator.nome}>{operator.nome}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Mês
-            <input
-              type="number"
-              min="1"
-              max="12"
-              value={filter.mes}
-              onChange={(e) => setFilter({ ...filter, mes: e.target.value })}
-              placeholder="Mês"
-            />
-          </label>
-          <label>
-            Ano
-            <input
-              type="number"
-              min="2020"
-              value={filter.ano}
-              onChange={(e) => setFilter({ ...filter, ano: e.target.value })}
-              placeholder="Ano"
-            />
-          </label>
-          <label>
-            Estado
-            <input
-              value={filter.estado}
-              onChange={(e) => setFilter({ ...filter, estado: e.target.value })}
-              placeholder="Estado"
-            />
-          </label>
-          <label>
-            Cidade
-            <input
-              value={filter.cidade}
-              onChange={(e) => setFilter({ ...filter, cidade: e.target.value })}
-              placeholder="Cidade"
-            />
-          </label>
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={filter.conferido === 'sim'}
-                onChange={(e) => setFilter({ ...filter, conferido: e.target.checked ? 'sim' : '' })}
-              />
-              Relatórios conferidos
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={filter.incluirDesabilitados}
-                onChange={(e) => setFilter({ ...filter, incluirDesabilitados: e.target.checked })}
-              />
-              Incluir desabilitadas
-            </label>
-          </div>
-          <button className="secondary-button filter-apply" onClick={handleApplyFilters}>Filtrar</button>
-        </div>
-      </section>
+      {selectedSection === 'cadastro' && (
+        <>
+          <section className="filter-panel">
+            <div className="filter-grid filter-grid-top">
+              <label>
+                Operador
+                <select value={filter.operador} onChange={(e) => setFilter({ ...filter, operador: e.target.value })}>
+                  <option value="">Todos</option>
+                  {operators.map((operator) => (
+                    <option key={operator.id} value={operator.nome}>{operator.nome}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Mês
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={filter.mes}
+                  onChange={(e) => setFilter({ ...filter, mes: e.target.value })}
+                  placeholder="Mês"
+                />
+              </label>
+              <label>
+                Ano
+                <input
+                  type="number"
+                  min="2020"
+                  value={filter.ano}
+                  onChange={(e) => setFilter({ ...filter, ano: e.target.value })}
+                  placeholder="Ano"
+                />
+              </label>
+              <label>
+                Estado
+                <input
+                  value={filter.estado}
+                  onChange={(e) => setFilter({ ...filter, estado: e.target.value })}
+                  placeholder="Estado"
+                />
+              </label>
+              <label>
+                Cidade
+                <input
+                  value={filter.cidade}
+                  onChange={(e) => setFilter({ ...filter, cidade: e.target.value })}
+                  placeholder="Cidade"
+                />
+              </label>
+              <div className="checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={filter.conferido === 'sim'}
+                    onChange={(e) => setFilter({ ...filter, conferido: e.target.checked ? 'sim' : '' })}
+                  />
+                  Relatórios conferidos
+                </label>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={filter.incluirDesabilitados}
+                    onChange={(e) => setFilter({ ...filter, incluirDesabilitados: e.target.checked })}
+                  />
+                  Incluir desabilitadas
+                </label>
+              </div>
+              <button className="secondary-button filter-apply" onClick={handleApplyFilters}>Filtrar</button>
+            </div>
+          </section>
 
-      <CityButtons cidades={cities} selectedCity={selectedCity} onSelect={setSelectedCity} />
+          <CityButtons cidades={cities} selectedCity={selectedCity} onSelect={setSelectedCity} />
+        </>
+      )}
 
       <main className="main-layout">
         <section className="main-content">
@@ -586,7 +620,14 @@ function Dashboard() {
                 <button className="primary-button" onClick={handleSaveDds}>Salvar DDS</button>
               </div>
 
-              <DdsList ddsList={ddsList} selectedDds={selectedDds} onSelect={setSelectedDds} onMarkConferido={handleMarkConferido} />
+              <DdsList
+                ddsList={ddsList}
+                selectedDds={selectedDds}
+                onSelect={setSelectedDds}
+                onMarkConferido={handleMarkConferido}
+                onDeleteDds={handleDeleteDds}
+                isAdmin={isAdmin}
+              />
             </>
           ) : (
             <div className="form-card">

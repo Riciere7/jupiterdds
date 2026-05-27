@@ -13,7 +13,8 @@ function Login() {
     }
   }, [navigate]);
 
-  const handleLogin = async () => {
+  const handleLogin = async (event) => {
+    if (event) event.preventDefault();
     setError('');
     try {
       const response = await fetch('/api/auth/login', {
@@ -42,15 +43,17 @@ function Login() {
         <h1>Login DDS</h1>
         <p>Entre com seu usuário para acessar a plataforma.</p>
         {error && <div className="message-box error-box">{error}</div>}
-        <label>
-          E-mail
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@dds.com" />
-        </label>
-        <label>
-          Senha
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="admin123" />
-        </label>
-        <button className="primary-button" onClick={handleLogin}>Entrar</button>
+        <form onSubmit={handleLogin}>
+          <label>
+            E-mail
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@dds.com" />
+          </label>
+          <label>
+            Senha
+            <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="admin123" />
+          </label>
+          <button className="primary-button" type="submit">Entrar</button>
+        </form>
       </div>
     </div>
   );

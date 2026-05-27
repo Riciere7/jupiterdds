@@ -7,6 +7,13 @@ const db = require('../db');
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
+function requireAdmin(req, res, next) {
+  if (req.user && req.user.perfil === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem executar esta ação.' });
+}
+
 router.get('/', (req, res) => {
   const filters = [];
   const values = [];
@@ -103,6 +110,35 @@ router.delete('/anexos/:id', (req, res) => {
       db.run('DELETE FROM anexos_dds WHERE id = ?', [id], function (deleteErr) {
         if (deleteErr) return res.status(500).json({ error: deleteErr.message });
         res.json({ deleted: this.changes });
+      });
+    });
+  });
+});
+
+router.delete('/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.get('SELECT id FROM dds WHERE id = ?', [id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'DDS não encontrado.' });
+
+    db.all('SELECT caminho_arquivo FROM anexos_dds WHERE dds_id = ?', [id], (fileErr, attachments) => {
+      if (fileErr) return res.status(500).json({ error: fileErr.message });
+
+      attachments.forEach((attachment) => {
+        if (attachment.caminho_arquivo) {
+          const filePath = path.resolve(attachment.caminho_arquivo);
+          fs.unlink(filePath, () => {});
+        }
+      });
+
+      db.run('DELETE FROM anexos_dds WHERE dds_id = ?', [id], (deleteAttachmentsErr) => {
+        if (deleteAttachmentsErr) return res.status(500).json({ error: deleteAttachmentsErr.message });
+
+        db.run('DELETE FROM dds WHERE id = ?', [id], function (deleteDdsErr) {
+          if (deleteDdsErr) return res.status(500).json({ error: deleteDdsErr.message });
+          res.json({ deleted: this.changes });
+        });
       });
     });
   });
